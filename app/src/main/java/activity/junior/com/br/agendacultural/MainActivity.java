@@ -15,15 +15,16 @@ import java.util.List;
 import activity.junior.com.br.agendacultural.model.Event;
 import activity.junior.com.br.agendacultural.service.EventsService;
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
 
-    private Call<List<Event>> events;
     private EventsService eventsService;
-    private List<Event> responseEvents;
+    private List<Event> events;
 
     @ViewById
     protected TextView textoTeste;
@@ -32,8 +33,20 @@ public class MainActivity extends AppCompatActivity {
     public void appConfig() {
 
         serviceConfig();
-        events = eventsService.getEvents();
-        retrieveEvents();
+        Call<List<Event>> call = eventsService.getEvents();
+        call.enqueue(new Callback<List<Event>>() {
+            @Override
+            public void onResponse(Call<List<Event>> call, Response<List<Event>> response) {
+                events = response.body();
+                textoTeste.setText(events.get(0).getTitle());
+            }
+
+            @Override
+            public void onFailure(Call<List<Event>> call, Throwable t) {
+
+            }
+        });
+
     }
 
     private void serviceConfig() {
@@ -43,20 +56,6 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         eventsService = retrofit.create(EventsService.class);
-    }
-
-    @Background
-    protected void retrieveEvents(){
-        try {
-            responseEvents =  events.execute().body();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @UiThread
-    protected void updateViews(){
-        textoTeste.setText(responseEvents.size());
     }
 
 }
